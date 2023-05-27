@@ -1,5 +1,5 @@
 ---
-import MatchCard from '../components/MatchCard.astro'
+import MatchCard from '../components/MatchCard.svelte'
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -8,9 +8,12 @@ import MatchCard from '../components/MatchCard.astro'
         <title>League Tracker</title>
     </head>
     <body>
-        <div>
+        <div id="navbar">
             <h1>League Tracker</h1>
-            <span>Leaderboard</span>
+            <!-- <span>Leaderboard</span> -->
+        </div>
+        <div id="cardholder">
+            <MatchCard />    
         </div>
     </body>
 </html>
