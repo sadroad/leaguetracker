@@ -1,16 +1,36 @@
 use dotenvy::dotenv;
+use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+use phf::phf_map;
+use riven::consts::Champion;
 use riven::consts::PlatformRoute;
 use riven::consts::Queue;
 use riven::consts::RegionalRoute;
+use riven::models::summoner_v4::Summoner;
 use riven::RiotApi;
 use sqlx::postgres::PgPoolOptions;
+use std::collections::HashMap;
 use std::env;
-use std::sync::{Arc, Mutex};
+use std::path::Path;
+use std::sync::Arc;
 use std::time::{self, Duration};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use tokio::sync::mpsc;
+use tokio::sync::Mutex;
 use tokio::time::sleep;
+
+static SUMMONER_SPELLS: phf::Map<i32, &'static str> = phf_map! {
+    1_i32 => "Cleanse",
+    3_i32 => "Exhaust",
+    4_i32 => "Flash",
+    6_i32 => "Ghost",
+    7_i32 => "Heal",
+    11_i32 => "Smite",
+    12_i32 => "Teleport",
+    13_i32 => "Clarity",
+    14_i32 => "Ignite",
+    21_i32 => "Barrier",
+};
 
 #[derive(Debug, Clone)]
 struct PlayerStats {
@@ -23,68 +43,55 @@ struct PlayerStats {
     summoner_spell_1: i32,
     summoner_spell_2: i32,
     champion_id: i32,
+    champion_name: String,
     game_completion: i64,
-    game_duartion: i64,
+    game_duration: i64,
     win: bool,
+    match_id: String,
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenv()?;
-    //let connection_string = env::var("DATABASE_URL")?;
-    //let pool = PgPoolOptions::new()
-    //    .max_connections(5)
-    //    .connect(&connection_string).await?;
-    //let row: (i64,) = sqlx::query_as("SELECT id2 FROM test")
-    //    .fetch_one(&pool)
-    //    .await?;
-    //dbg!(&row);
+    let connection_string = env::var("DATABASE_URL")?;
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&connection_string)
+        .await?;
 
     let riot_api_key = env::var("RGAPI_KEY")?;
     let riot_api = Arc::new(RiotApi::new(riot_api_key));
 
-    let accounts = Arc::new(Mutex::new(Vec::new()));
+    let accounts = Arc::new(Mutex::new(HashMap::new()));
+
+    load_players(&accounts.clone(), &riot_api.clone()).await;
 
     let file_accounts = accounts.clone();
     let riot_api_file = riot_api.clone();
 
-    tokio::spawn(async move {
-        let mut last_checksum = 0_u32;
-        let mut last_accounts_in_file = Vec::new();
-        loop {
-            let mut player_file = File::open("players").await.unwrap();
-            let mut buffer = Vec::new();
-            player_file.read_to_end(&mut buffer).await.unwrap();
-            let current_checksum = crc32fast::hash(&buffer);
-            if last_checksum != current_checksum {
-                let current_accounts_in_file= String::from_utf8(buffer)
-                    .unwrap()
-                    .split('\n')
-                    .map(|x| x.to_string())
-                    .filter(|x| !x.is_empty())
-                    .collect::<Vec<String>>();
-                for account in current_accounts_in_file.iter() {
-                    if !last_accounts_in_file.contains(account) {
-                        println!("{} added to accounts", account);
-                    }
-                }
-                last_accounts_in_file = current_accounts_in_file.clone();
-                last_checksum = current_checksum;
-
-                let mut accounts = Vec::new();
-                for account in current_accounts_in_file.iter() {
-                    let summoner = riot_api_file
-                        .summoner_v4()
-                        .get_by_summoner_name(PlatformRoute::NA1, account)
-                        .await
-                        .unwrap()
-                        .expect("No summoner found");
-                    accounts.push(summoner);
-                }
-                *file_accounts.lock().unwrap() = accounts;
-
-                println!("Done loading accounts");
+    let (tx, mut rx) = mpsc::unbounded_channel();
+    let mut watcher = RecommendedWatcher::new(
+        move |res| match res {
+            Ok(event) => {
+                tx.send(event).unwrap();
             }
+            Err(e) => println!("watch error: {:?}", e),
+        },
+        Config::default(),
+    )
+    .unwrap();
+
+    watcher
+        .watch(Path::new("."), RecursiveMode::Recursive)
+        .unwrap();
+
+    tokio::spawn(async move {
+        while let Some(res) = rx.recv().await {
+            let file_name = res.paths[0].to_str().unwrap().split("./").last().unwrap();
+            if file_name != "players" {
+                continue;
+            }
+            load_players(&file_accounts, &riot_api_file).await;
         }
     });
 
@@ -104,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     while let Some(epoch_time) = rx.recv().await {
-        for summoner in accounts.lock().unwrap().iter() {
+        for summoner in accounts.lock().await.values() {
             if let Ok(match_list) = riot_api
                 .match_v5()
                 .get_match_ids_by_puuid(
@@ -145,11 +152,55 @@ async fn main() -> anyhow::Result<()> {
                         summoner_spell_1: player_particpant_data.summoner1_id,
                         summoner_spell_2: player_particpant_data.summoner2_id,
                         champion_id: player_particpant_data.champion().unwrap().0 as i32,
-                        game_duartion: game.info.game_duration,
+                        champion_name: Champion(
+                            player_particpant_data.champion().unwrap().0 as i16,
+                        )
+                        .name()
+                        .unwrap()
+                        .to_string(),
+                        game_duration: game.info.game_duration,
                         game_completion: game.info.game_end_timestamp.unwrap(),
                         win: player_particpant_data.win,
+                        match_id: match_id.to_string(),
                     };
-                    dbg!(player_stats);
+
+                    sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)")
+                        .bind(&player_stats.name)
+                        .bind(&player_stats.kills)
+                        .bind(&player_stats.deaths)
+                        .bind(&player_stats.assists)
+                        .bind(&player_stats.primary_rune)
+                        .bind(&player_stats.secondary_rune)
+                        .bind(&player_stats.summoner_spell_1)
+                        .bind(&player_stats.summoner_spell_2)
+                        .bind(&player_stats.champion_id)
+                        .bind(&player_stats.champion_name)
+                        .bind(&player_stats.game_duration)
+                        .bind(&player_stats.game_completion)
+                        .bind(&player_stats.win)
+                        .bind(&player_stats.match_id)
+                        .execute(&pool)
+                        .await?;
+
+                    println!("Player: {}", player_stats.name);
+                    println!(
+                        "KDA: {}/{}/{}",
+                        player_stats.kills, player_stats.deaths, player_stats.assists
+                    );
+                    println!("Primary Tree: {}", player_stats.primary_rune);
+                    println!("Secondary Tree: {}", player_stats.secondary_rune);
+                    println!(
+                        "Summoner Spell 1: {}",
+                        SUMMONER_SPELLS.get(&player_stats.summoner_spell_1).unwrap()
+                    );
+                    println!(
+                        "Summoner Spell 2: {}",
+                        SUMMONER_SPELLS.get(&player_stats.summoner_spell_2).unwrap()
+                    );
+                    println!("Champion: {}", player_stats.champion_name);
+                    println!("Game Duration: {}", player_stats.game_duration);
+                    println!("Game Completion: {}", player_stats.game_completion);
+                    println!("Win: {}", player_stats.win);
                 }
             };
         }
@@ -159,4 +210,57 @@ async fn main() -> anyhow::Result<()> {
         "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/";
 
     Ok(())
+}
+
+async fn load_players(
+    global_accounts: &Arc<Mutex<HashMap<String, Summoner>>>,
+    riot_api: &Arc<RiotApi>,
+) {
+    let last_accounts_in_file = {
+        global_accounts
+            .lock()
+            .await
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>()
+    };
+    let mut buffer = Vec::new();
+    {
+        let mut player_file = File::open("players").await.unwrap();
+        player_file.read_to_end(&mut buffer).await.unwrap();
+    }
+    let mut current_accounts_in_file = String::from_utf8(buffer)
+        .unwrap()
+        .split('\n')
+        .map(|x| x.to_string())
+        .filter(|x| !x.is_empty())
+        .collect::<Vec<String>>();
+
+    if current_accounts_in_file.len() < last_accounts_in_file.len() {
+        let mut accounts = global_accounts.lock().await;
+        last_accounts_in_file
+            .iter()
+            .filter(|x| !current_accounts_in_file.contains(x))
+            .for_each(|x| {
+                accounts.remove(x);
+            });
+        println!("Done removing accounts");
+    } else {
+        current_accounts_in_file.retain(|x| !last_accounts_in_file.contains(x));
+        for account in current_accounts_in_file.iter() {
+            let summoner = riot_api
+                .summoner_v4()
+                .get_by_summoner_name(PlatformRoute::NA1, account)
+                .await
+                .unwrap()
+                .expect("No summoner found");
+            global_accounts
+                .lock()
+                .await
+                .insert(account.clone(), summoner);
+        }
+        if !current_accounts_in_file.is_empty() || last_accounts_in_file.is_empty() {
+            println!("Done loading accounts");
+        }
+    }
 }
