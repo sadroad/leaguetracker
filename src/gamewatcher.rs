@@ -51,11 +51,9 @@ struct PlayerStats {
 }
 
 pub async fn start_game_watcher(
-    riot_api_key: &str,
+    riot_api: Arc<RiotApi>,
     db_pool: &Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    let riot_api = Arc::new(RiotApi::new(riot_api_key));
-
     let accounts = Arc::new(Mutex::new(HashMap::new()));
 
     load_players(&accounts.clone(), &riot_api.clone()).await;

@@ -1,9 +1,12 @@
 use axum::{debug_handler, http::StatusCode, response::IntoResponse, Router};
 use dotenvy::dotenv;
+use riven::RiotApi;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::{env, net::SocketAddr, sync::Arc};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use axum::routing::get;
+use axum::extract::State;
 
 mod gamewatcher;
 use gamewatcher::start_game_watcher;
@@ -14,6 +17,7 @@ const CDN_BASE_URL: &str =
 #[derive(Clone)]
 struct AppState {
     conn: Arc<Pool<Postgres>>,
+    riot: Arc<RiotApi>,
 }
 
 #[tokio::main]
@@ -34,14 +38,16 @@ async fn main() -> anyhow::Result<()> {
             .await?,
     );
     let riot_api_key = env::var("RGAPI_KEY")?;
+    let riot_api = Arc::new(RiotApi::new(&riot_api_key));
 
-    let state = AppState { conn: pool.clone() };
+    let state = AppState { conn: pool.clone(), riot: riot_api.clone() };
 
     tokio::spawn(async move {
-        _ = start_game_watcher(&riot_api_key, &pool).await;
+        _ = start_game_watcher(riot_api, &pool).await;
     });
 
     let app = Router::new()
+        .route("/api/get_games", get(get_games_handler))
         .nest_service("/", ServeDir::new("public"))
         .fallback(handler_404)
         .layer(TraceLayer::new_for_http())
@@ -54,6 +60,11 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     Ok(())
+}
+
+#[debug_handler]
+async fn get_games_handler(state: State<AppState>) -> impl IntoResponse {
+    "hi"
 }
 
 #[debug_handler]
