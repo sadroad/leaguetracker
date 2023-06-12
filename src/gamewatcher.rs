@@ -5,6 +5,7 @@ use riven::{
     models::summoner_v4::Summoner,
     RiotApi,
 };
+use tracing::info;
 use sqlx::{Pool, Postgres};
 use std::{
     collections::HashMap,
@@ -67,7 +68,7 @@ pub async fn start_game_watcher(
             Ok(event) => {
                 tx.send(event).unwrap();
             }
-            Err(e) => println!("watch error: {:?}", e),
+            Err(e) => info!("watch error: {:?}", e),
         },
         Config::default(),
     )
@@ -121,7 +122,7 @@ pub async fn start_game_watcher(
                 if match_list.is_empty() {
                     continue;
                 }
-                println!("{} played a match in the last minute", summoner.name);
+                info!("{} played a match in the last minute", summoner.name);
                 for match_id in match_list.iter() {
                     let game = match riot_api
                         .match_v5()
@@ -130,7 +131,7 @@ pub async fn start_game_watcher(
                     {
                         Some(game) => game,
                         None => {
-                            println!("Unable to find match_id: {}", match_id);
+                            info!("Unable to find match_id: {}", match_id);
                             continue;
                         }
                     };
@@ -145,13 +146,13 @@ pub async fn start_game_watcher(
                         kills: player_particpant_data.kills,
                         deaths: player_particpant_data.deaths,
                         assists: player_particpant_data.assists,
-                        primary_rune: player_particpant_data.perks.styles[0].style,
+                        primary_rune: player_particpant_data.perks.styles[0].selections[0].perk,
                         secondary_rune: player_particpant_data.perks.styles[1].style,
                         summoner_spell_1: player_particpant_data.summoner1_id,
                         summoner_spell_2: player_particpant_data.summoner2_id,
                         champion_id: player_particpant_data.champion().unwrap().0 as i32,
                         champion_name: Champion(player_particpant_data.champion().unwrap().0)
-                            .name()
+                            .identifier()
                             .unwrap()
                             .to_string(),
                         game_duration: game.info.game_duration,
@@ -178,25 +179,25 @@ pub async fn start_game_watcher(
                         .execute(db_pool)
                         .await?;
 
-                    println!("Player: {}", player_stats.name);
-                    println!(
+                    info!("Player: {}", player_stats.name);
+                    info!(
                         "KDA: {}/{}/{}",
                         player_stats.kills, player_stats.deaths, player_stats.assists
                     );
-                    println!("Primary Tree: {}", player_stats.primary_rune);
-                    println!("Secondary Tree: {}", player_stats.secondary_rune);
-                    println!(
+                    info!("Primary Tree: {}", player_stats.primary_rune);
+                    info!("Secondary Tree: {}", player_stats.secondary_rune);
+                    info!(
                         "Summoner Spell 1: {}",
                         SUMMONER_SPELLS.get(&player_stats.summoner_spell_1).unwrap()
                     );
-                    println!(
+                    info!(
                         "Summoner Spell 2: {}",
                         SUMMONER_SPELLS.get(&player_stats.summoner_spell_2).unwrap()
                     );
-                    println!("Champion: {}", player_stats.champion_name);
-                    println!("Game Duration: {}", player_stats.game_duration);
-                    println!("Game Completion: {}", player_stats.game_completion);
-                    println!("Win: {}", player_stats.win);
+                    info!("Champion: {}", player_stats.champion_name);
+                    info!("Game Duration: {}", player_stats.game_duration);
+                    info!("Game Completion: {}", player_stats.game_completion);
+                    info!("Win: {}", player_stats.win);
                 }
             };
         }
@@ -236,7 +237,7 @@ async fn load_players(
             .for_each(|x| {
                 accounts.remove(x);
             });
-        println!("Done removing accounts");
+        info!("Done removing accounts");
     } else {
         current_accounts_in_file.retain(|x| !last_accounts_in_file.contains(x));
         for account in current_accounts_in_file.iter() {
@@ -248,7 +249,7 @@ async fn load_players(
             {
                 Some(x) => x,
                 None => {
-                    println!("Could not find summoner {}", account);
+                    info!("Could not find summoner {}", account);
                     continue;
                 }
             };
@@ -259,7 +260,7 @@ async fn load_players(
                 .insert(account.clone(), summoner);
         }
         if !current_accounts_in_file.is_empty() || last_accounts_in_file.is_empty() {
-            println!("Done loading accounts");
+            info!("Done loading accounts");
         }
     }
 }

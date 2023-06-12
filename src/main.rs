@@ -1,4 +1,5 @@
 use axum::{debug_handler, http::StatusCode, response::IntoResponse, Router};
+use axum::Json;
 use dotenvy::dotenv;
 use riven::RiotApi;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -7,6 +8,8 @@ use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use axum::routing::get;
 use axum::extract::State;
+use serde_json::json;
+use serde::{Serialize, Deserialize};
 
 mod gamewatcher;
 use gamewatcher::start_game_watcher;
@@ -55,16 +58,40 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     tracing::debug!("Listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::Server::bind(&addr) .serve(app.into_make_service())
         .await?;
 
     Ok(())
 }
 
+#[derive(sqlx::FromRow, Serialize, Deserialize)]
+struct Game {
+    id: i32,
+    name: String,
+    kills: i32,
+    deaths: i32,
+    assists: i32,
+    primary_rune: i32,
+    secondary_rune: i32,
+    summoner_spell_1: i32,
+    summoner_spell_2: i32,
+    #[sqlx(rename="champion_id")]
+    champion: i32,
+    champion_name: String,
+    game_duration: i64,
+    game_completion_time: i64,
+    win: bool
+}
+
 #[debug_handler]
 async fn get_games_handler(state: State<AppState>) -> impl IntoResponse {
-    "hi"
+    let conn = state.conn.clone();
+    let mut games = sqlx::query_as::<_, Game>("SELECT * FROM games")
+        .fetch_all(conn.as_ref())
+        .await
+        .unwrap();
+    games.reverse();
+    Json(json!({"games": games}))
 }
 
 #[debug_handler]
