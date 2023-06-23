@@ -10,4 +10,5 @@ data need to ingest:
 - game outcome
 
 
-need to keep track of last epoch checked and update all games if there is a difference
+need to keep track of last epoch checked and update all games if there is a difference 
+(this is for when the server shuts down but nothing else)
