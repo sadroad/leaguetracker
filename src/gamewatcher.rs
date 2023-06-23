@@ -1,5 +1,4 @@
 use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
-use phf::phf_map;
 use riven::{
     consts::{Champion, PlatformRoute, Queue, RegionalRoute},
     models::summoner_v4::Summoner,
@@ -19,21 +18,9 @@ use tokio::{
     sync::{mpsc, Mutex},
     time::sleep,
 };
+use serde::Serialize;
 
-static SUMMONER_SPELLS: phf::Map<i32, &'static str> = phf_map! {
-    1_i32 => "Cleanse",
-    3_i32 => "Exhaust",
-    4_i32 => "Flash",
-    6_i32 => "Ghost",
-    7_i32 => "Heal",
-    11_i32 => "Smite",
-    12_i32 => "Teleport",
-    13_i32 => "Clarity",
-    14_i32 => "Ignite",
-    21_i32 => "Barrier",
-};
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 struct PlayerStats {
     name: String,
     kills: i32,
@@ -49,6 +36,13 @@ struct PlayerStats {
     game_duration: i64,
     win: bool,
     match_id: String,
+    item_0: i32,
+    item_1: i32,
+    item_2: i32,
+    item_3: i32,
+    item_4: i32,
+    item_5: i32,
+    item_6: i32,
 }
 
 pub async fn start_game_watcher(
@@ -159,9 +153,16 @@ pub async fn start_game_watcher(
                         game_completion: game.info.game_end_timestamp.unwrap(),
                         win: player_particpant_data.win,
                         match_id: match_id.to_string(),
+                        item_0: player_particpant_data.item0,
+                        item_1: player_particpant_data.item1,
+                        item_2: player_particpant_data.item2,
+                        item_3: player_particpant_data.item3,
+                        item_4: player_particpant_data.item4,
+                        item_5: player_particpant_data.item5,
+                        item_6: player_particpant_data.item6,
                     };
 
-                    sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)")
+                    sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)")
                         .bind(&player_stats.name)
                         .bind(player_stats.kills)
                         .bind(player_stats.deaths)
@@ -176,28 +177,17 @@ pub async fn start_game_watcher(
                         .bind(player_stats.game_completion)
                         .bind(player_stats.win)
                         .bind(&player_stats.match_id)
+                        .bind(player_stats.item_0)
+                        .bind(player_stats.item_1)
+                        .bind(player_stats.item_2)
+                        .bind(player_stats.item_3)
+                        .bind(player_stats.item_4)
+                        .bind(player_stats.item_5)
+                        .bind(player_stats.item_6)
                         .execute(db_pool)
                         .await?;
 
-                    info!("Player: {}", player_stats.name);
-                    info!(
-                        "KDA: {}/{}/{}",
-                        player_stats.kills, player_stats.deaths, player_stats.assists
-                    );
-                    info!("Primary Tree: {}", player_stats.primary_rune);
-                    info!("Secondary Tree: {}", player_stats.secondary_rune);
-                    info!(
-                        "Summoner Spell 1: {}",
-                        SUMMONER_SPELLS.get(&player_stats.summoner_spell_1).unwrap()
-                    );
-                    info!(
-                        "Summoner Spell 2: {}",
-                        SUMMONER_SPELLS.get(&player_stats.summoner_spell_2).unwrap()
-                    );
-                    info!("Champion: {}", player_stats.champion_name);
-                    info!("Game Duration: {}", player_stats.game_duration);
-                    info!("Game Completion: {}", player_stats.game_completion);
-                    info!("Win: {}", player_stats.win);
+                    info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
                 }
             };
         }

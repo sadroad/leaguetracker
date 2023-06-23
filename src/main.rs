@@ -10,17 +10,14 @@ use axum::routing::get;
 use axum::extract::State;
 use serde_json::json;
 use serde::{Serialize, Deserialize};
+use ts_rs::TS;
 
 mod gamewatcher;
 use gamewatcher::start_game_watcher;
 
-const CDN_BASE_URL: &str =
-    "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/";
-
 #[derive(Clone)]
 struct AppState {
     conn: Arc<Pool<Postgres>>,
-    riot: Arc<RiotApi>,
 }
 
 #[tokio::main]
@@ -43,7 +40,7 @@ async fn main() -> anyhow::Result<()> {
     let riot_api_key = env::var("RGAPI_KEY")?;
     let riot_api = Arc::new(RiotApi::new(&riot_api_key));
 
-    let state = AppState { conn: pool.clone(), riot: riot_api.clone() };
+    let state = AppState { conn: pool.clone()};
 
     tokio::spawn(async move {
         _ = start_game_watcher(riot_api, &pool).await;
@@ -64,7 +61,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize)]
+#[derive(sqlx::FromRow, Serialize, Deserialize, TS)]
+#[ts(export)]
 struct Game {
     id: i32,
     name: String,
@@ -80,7 +78,14 @@ struct Game {
     champion_name: String,
     game_duration: i64,
     game_completion_time: i64,
-    win: bool
+    win: bool,
+    item_0: i32,
+    item_1: i32,
+    item_2: i32,
+    item_3: i32,
+    item_4: i32,
+    item_5: i32,
+    item_6: i32,
 }
 
 #[debug_handler]
