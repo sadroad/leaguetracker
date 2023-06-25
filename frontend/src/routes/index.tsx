@@ -10,8 +10,14 @@ interface Games {
 export const getGameData = routeLoader$(async () => {
   const endpoint = "http://localhost:8080/api/get_games";
   const res = await fetch(endpoint);
-  const data = await res.json();
-  return data as Games;
+  const data = await res.json() as Games;
+  const games = data.games.sort((a, b) => {
+    if (a.id === b.id) {
+      return 0;
+    }
+    return a.id < b.id ? 1 : -1;
+  });
+  return games;
 });
 
 export const getPrimaryRunes = routeLoader$(async () => {
@@ -56,13 +62,7 @@ export const getItems = routeLoader$(async () => {
 });
 
 export default component$(() => {
-  const game_data = getGameData();
-  const games = game_data.value.games.sort((a, b) => {
-    if (a.id === b.id) {
-      return 0;
-    }
-    return a.id < b.id ? 1 : -1;
-  });
+  const games = getGameData();
   const primary_runes = getPrimaryRunes();
   const get_items = getItems();
   const vecItems = (game: Game) => {
@@ -81,7 +81,7 @@ export default component$(() => {
         {/* <span>Leaderboard</span> */}
       </div>
       <div id="cardholder" class="flex flex-col gap-10 pt-10">
-        {games.map((game) => {
+        {games.value.map((game) => {
           return (
             <div key={game.id}>
               <MatchCard
