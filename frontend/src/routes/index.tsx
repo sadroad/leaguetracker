@@ -7,8 +7,8 @@ interface Games {
   games: Game[];
 }
 
-export const getGameData = routeLoader$(async () => {
-  const endpoint = "http://localhost:8080/api/get_games";
+export const getGameData = routeLoader$(async (requestEvent) => {
+  const endpoint = requestEvent.env.get("API_SERVER")+"/api/games";
   const res = await fetch(endpoint);
   const data = await res.json() as Games;
   const games = data.games.sort((a, b) => {
