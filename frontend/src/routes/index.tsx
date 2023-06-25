@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$, DocumentHead } from "@builder.io/qwik-city";
-import { Game } from "../../../bindings/Game.ts";
+import { Game } from "../../bindings/Game.ts";
 import { MatchCard } from "../components/matchcard/matchcard";
 
 interface Games {
