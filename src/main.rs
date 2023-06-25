@@ -62,7 +62,6 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/api/get_games", get(get_games_handler))
-        .nest_service("/", ServeDir::new("public"))
         .fallback(handler_404)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
