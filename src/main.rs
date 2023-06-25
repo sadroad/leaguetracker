@@ -1,23 +1,32 @@
-use axum::{debug_handler, http::StatusCode, response::IntoResponse, Router};
-use axum::Json;
+use axum::{
+    debug_handler, extract::State, http::StatusCode, response::IntoResponse, routing::get, Json,
+    Router,
+};
 use dotenvy::dotenv;
 use riven::RiotApi;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::{env, net::SocketAddr, sync::Arc};
+use std::{
+    env,
+    net::SocketAddr,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
+};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use axum::routing::get;
-use axum::extract::State;
-use serde_json::json;
-use serde::{Serialize, Deserialize};
 use ts_rs::TS;
 
 mod gamewatcher;
 use gamewatcher::start_game_watcher;
 
 #[derive(Clone)]
-struct AppState {
+pub struct AppState {
     conn: Arc<Pool<Postgres>>,
+    new_game: Arc<AtomicBool>,
+    games: Arc<Mutex<Vec<Game>>>,
 }
 
 #[tokio::main]
@@ -40,10 +49,15 @@ async fn main() -> anyhow::Result<()> {
     let riot_api_key = env::var("RGAPI_KEY")?;
     let riot_api = Arc::new(RiotApi::new(&riot_api_key));
 
-    let state = AppState { conn: pool.clone()};
+    let state = AppState {
+        conn: pool.clone(),
+        new_game: Arc::new(AtomicBool::new(true)),
+        games: Arc::new(Mutex::new(Vec::new())),
+    };
 
+    let gamewatcher_state = state.clone();
     tokio::spawn(async move {
-        _ = start_game_watcher(riot_api, &pool).await;
+        _ = start_game_watcher(riot_api, gamewatcher_state).await;
     });
 
     let app = Router::new()
@@ -55,13 +69,14 @@ async fn main() -> anyhow::Result<()> {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     tracing::debug!("Listening on {}", addr);
-    axum::Server::bind(&addr) .serve(app.into_make_service())
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
         .await?;
 
     Ok(())
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize, TS)]
+#[derive(sqlx::FromRow, Serialize, Deserialize, TS, Clone)]
 #[ts(export)]
 struct Game {
     id: i32,
@@ -73,7 +88,7 @@ struct Game {
     secondary_rune: i32,
     summoner_spell_1: i32,
     summoner_spell_2: i32,
-    #[sqlx(rename="champion_id")]
+    #[sqlx(rename = "champion_id")]
     champion: i32,
     champion_name: String,
     game_duration: i64,
@@ -90,13 +105,21 @@ struct Game {
 
 #[debug_handler]
 async fn get_games_handler(state: State<AppState>) -> impl IntoResponse {
-    let conn = state.conn.clone();
-    let mut games = sqlx::query_as::<_, Game>("SELECT * FROM games")
-        .fetch_all(conn.as_ref())
-        .await
-        .unwrap();
-    games.reverse();
-    Json(json!({"games": games}))
+    let games = if state.new_game.load(Ordering::Relaxed) {
+        let conn = state.conn.clone();
+        let mut games = sqlx::query_as::<_, Game>("SELECT * FROM games")
+            .fetch_all(conn.as_ref())
+            .await
+            .unwrap();
+        games.reverse();
+        *state.games.lock().unwrap() = games.clone();
+        state.new_game.store(false, Ordering::Relaxed);
+        games
+    } else {
+        tracing::info!("Returning cached games");
+        state.games.lock().unwrap().clone()
+    };
+    Json(json!({ "games": games }))
 }
 
 #[debug_handler]

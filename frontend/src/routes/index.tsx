@@ -19,13 +19,19 @@ export const getPrimaryRunes = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json"
   );
   const rune_data = await res.json();
-  const rune_map = rune_data.reduce((acc: { [x: string]: any; }, rune: { iconPath: string; id: string | number; }) => {
-    const rune_path = rune.iconPath
-      .slice(rune.iconPath.indexOf("Styles") + 7)
-      .toLowerCase();
-    acc[rune.id] = rune_path;
-    return acc;
-  }, {});
+  const rune_map = rune_data.reduce(
+    (
+      acc: { [x: string]: any },
+      rune: { iconPath: string; id: string | number }
+    ) => {
+      const rune_path = rune.iconPath
+        .slice(rune.iconPath.indexOf("Styles") + 7)
+        .toLowerCase();
+      acc[rune.id] = rune_path;
+      return acc;
+    },
+    {}
+  );
   return rune_map;
 });
 
@@ -34,12 +40,18 @@ export const getItems = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json"
   );
   const item_data = await res.json();
-  const item_map = item_data.reduce((acc: { [x: string]: any; }, item: { id: string | number; iconPath: string; }) => {
-    acc[item.id] = item.iconPath
-      .slice(item.iconPath.indexOf("Icons2D") + 8)
-      .toLowerCase();
-    return acc;
-  }, {});
+  const item_map = item_data.reduce(
+    (
+      acc: { [x: string]: any },
+      item: { id: string | number; iconPath: string }
+    ) => {
+      acc[item.id] = item.iconPath
+        .slice(item.iconPath.indexOf("Icons2D") + 8)
+        .toLowerCase();
+      return acc;
+    },
+    {}
+  );
   return item_map;
 });
 
@@ -63,12 +75,12 @@ export default component$(() => {
   };
 
   return (
-    <>
-      <div id="navbar">
+    <div class="bg-slate-800">
+      <div id="navbar" class="text-5xl font-bold text-orange-200">
         <h1>League Tracker</h1>
         {/* <span>Leaderboard</span> */}
       </div>
-      <div id="cardholder" class="flex flex-col gap-10 bg-slate-900">
+      <div id="cardholder" class="flex flex-col gap-10 pt-10">
         {games.map((game) => {
           return (
             <div key={game.id}>
@@ -81,7 +93,7 @@ export default component$(() => {
           );
         })}
       </div>
-    </>
+    </div>
   );
 });
 

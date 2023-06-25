@@ -1,4 +1,8 @@
-export const SECONDARY_RUNES = {
+interface SecondaryRunes {
+  [key: number]: string;
+}
+
+export const SECONDARY_RUNES: SecondaryRunes = {
   8400: "7204_resolve.png",
   8100: "7200_domination.png",
   8000: "7201_precision.png",

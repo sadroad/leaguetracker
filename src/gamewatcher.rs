@@ -4,12 +4,11 @@ use riven::{
     models::summoner_v4::Summoner,
     RiotApi,
 };
-use tracing::info;
-use sqlx::{Pool, Postgres};
+use serde::Serialize;
 use std::{
     collections::HashMap,
     path::Path,
-    sync::Arc,
+    sync::{atomic::Ordering, Arc},
     time::{self, Duration},
 };
 use tokio::{
@@ -18,7 +17,9 @@ use tokio::{
     sync::{mpsc, Mutex},
     time::sleep,
 };
-use serde::Serialize;
+use tracing::info;
+
+use crate::AppState;
 
 #[derive(Debug, Clone, Serialize)]
 struct PlayerStats {
@@ -45,10 +46,8 @@ struct PlayerStats {
     item_6: i32,
 }
 
-pub async fn start_game_watcher(
-    riot_api: Arc<RiotApi>,
-    db_pool: &Pool<Postgres>,
-) -> anyhow::Result<()> {
+pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyhow::Result<()> {
+    let db_pool = state.conn.clone();
     let accounts = Arc::new(Mutex::new(HashMap::new()));
 
     load_players(&accounts.clone(), &riot_api.clone()).await;
@@ -184,9 +183,9 @@ pub async fn start_game_watcher(
                         .bind(player_stats.item_4)
                         .bind(player_stats.item_5)
                         .bind(player_stats.item_6)
-                        .execute(db_pool)
+                        .execute(db_pool.as_ref())
                         .await?;
-
+                    state.new_game.store(true, Ordering::Relaxed);
                     info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
                 }
             };

@@ -1,4 +1,8 @@
-export const NORMALIZATION_MAP = {
+interface NormalizationMap {
+  [key: string]: string;
+}
+
+export const NORMALIZATION_MAP: NormalizationMap = {
   aatrox: "aatrox_circle.png",
   ahri: "ahri_circle_0.skins_ahri_asu_prepro.png",
   akali: "akali_circle.png",

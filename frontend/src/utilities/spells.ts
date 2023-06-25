@@ -1,4 +1,8 @@
-export const SPELLS = {
+interface Spells {
+  [key: number]: string;
+}
+
+export const SPELLS: Spells = {
   1: "summoner_boost.png",
   3: "summoner_exhaust.png",
   4: "summoner_flash.png",
