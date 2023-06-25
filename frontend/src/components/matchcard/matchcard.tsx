@@ -1,5 +1,5 @@
 import { component$, useComputed$ } from "@builder.io/qwik";
-import { Game } from "../../../../bindings/Game";
+import { Game } from "../../../bindings/Game";
 import { NORMALIZATION_MAP } from "../../utilities/normalization";
 import { SPELLS } from "../../utilities/spells";
 import { SECONDARY_RUNES } from "../../utilities/secondaryrunes";
