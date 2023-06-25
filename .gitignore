@@ -1,7 +1,6 @@
 /target
 .env
 .vscode
-public
 iconfinder/target
 removeoldprimary/target
 scripts/iconfinder/target
