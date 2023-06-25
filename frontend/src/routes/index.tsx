@@ -19,7 +19,7 @@ export const getPrimaryRunes = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json"
   );
   const rune_data = await res.json();
-  const rune_map = rune_data.reduce((acc, rune) => {
+  const rune_map = rune_data.reduce((acc: { [x: string]: any; }, rune: { iconPath: string; id: string | number; }) => {
     const rune_path = rune.iconPath
       .slice(rune.iconPath.indexOf("Styles") + 7)
       .toLowerCase();
@@ -34,7 +34,7 @@ export const getItems = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json"
   );
   const item_data = await res.json();
-  const item_map = item_data.reduce((acc, item) => {
+  const item_map = item_data.reduce((acc: { [x: string]: any; }, item: { id: string | number; iconPath: string; }) => {
     acc[item.id] = item.iconPath
       .slice(item.iconPath.indexOf("Icons2D") + 8)
       .toLowerCase();
@@ -56,8 +56,8 @@ export default component$(() => {
   const vecItems = (game: Game) => {
     const items = [];
     for (let i = 0; i < 7; i++) {
-      const item = game[`item_${i}`];
-      items.push(get_items.value[item]);
+      const item = game[`item_${i}` as keyof Game];
+      items.push(get_items.value[item as string]);
     }
     return items;
   };
