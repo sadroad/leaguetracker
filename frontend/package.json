@@ -1,6 +1,6 @@
 {
-  "name": "my-qwik-empty-starter",
-  "description": "App with Routing built-in ready to create your app",
+  "name": "leaguetracker",
+  "description": "just for viewing stats",
   "engines": {
     "node": ">=15.0.0"
   },
