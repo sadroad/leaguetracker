@@ -1,13 +1,14 @@
 import { component$ } from "@builder.io/qwik";
-import { routeLoader$, DocumentHead } from "@builder.io/qwik-city";
-import { Game } from "../../bindings/Game.ts";
+import type { DocumentHead } from "@builder.io/qwik-city";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import type { Game } from "../../bindings/Game.ts";
 import { MatchCard } from "../components/matchcard/matchcard";
 
 interface Games {
   games: Game[];
 }
 
-export const getGameData = routeLoader$(async (requestEvent) => {
+export const useGameData = routeLoader$(async (requestEvent) => {
   const endpoint = requestEvent.env.get("API_SERVER")+"/api/get_games";
   const res = await fetch(endpoint);
   const data = await res.json() as Games;
@@ -20,7 +21,7 @@ export const getGameData = routeLoader$(async (requestEvent) => {
   return games;
 });
 
-export const getPrimaryRunes = routeLoader$(async () => {
+export const usePrimaryRunes = routeLoader$(async () => {
   const res = await fetch(
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json"
   );
@@ -41,7 +42,7 @@ export const getPrimaryRunes = routeLoader$(async () => {
   return rune_map;
 });
 
-export const getItems = routeLoader$(async () => {
+export const useItems = routeLoader$(async () => {
   const res = await fetch(
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json"
   );
@@ -62,9 +63,9 @@ export const getItems = routeLoader$(async () => {
 });
 
 export default component$(() => {
-  const games = getGameData();
-  const primary_runes = getPrimaryRunes();
-  const get_items = getItems();
+  const games = useGameData();
+  const primary_runes = usePrimaryRunes();
+  const get_items = useItems();
   const vecItems = (game: Game) => {
     const items = [];
     for (let i = 0; i < 7; i++) {
