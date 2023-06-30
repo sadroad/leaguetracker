@@ -73,7 +73,10 @@ export const MatchCard = component$<MatchCardProps>((props) => {
           {formattedDifferenceDate(game.game_completion_time)}
         </div>
       </div>
-      <div id="playerscore" class="flex flex-grow flex-col gap-y-4 justify-center">
+      <div
+        id="playerscore"
+        class="flex flex-grow flex-col gap-y-4 justify-center"
+      >
         <div id="playername" class="text-center text-5xl font-semibold">
           {game.name}
         </div>

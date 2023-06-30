@@ -9,9 +9,9 @@ interface Games {
 }
 
 export const useGameData = routeLoader$(async (requestEvent) => {
-  const endpoint = requestEvent.env.get("API_SERVER")+"/api/get_games";
+  const endpoint = requestEvent.env.get("API_SERVER") + "/api/get_games";
   const res = await fetch(endpoint);
-  const data = await res.json() as Games;
+  const data = (await res.json()) as Games;
   const games = data.games.sort((a, b) => {
     if (a.id === b.id) {
       return 0;
@@ -28,16 +28,16 @@ export const usePrimaryRunes = routeLoader$(async () => {
   const rune_data = await res.json();
   const rune_map = rune_data.reduce(
     (
-      acc: { [x: string]: any },
+      acc: Map<string | number, string>,
       rune: { iconPath: string; id: string | number }
     ) => {
       const rune_path = rune.iconPath
         .slice(rune.iconPath.indexOf("Styles") + 7)
         .toLowerCase();
-      acc[rune.id] = rune_path;
+      acc.set(rune.id, rune_path);
       return acc;
     },
-    {}
+    new Map()
   );
   return rune_map;
 });
@@ -49,15 +49,16 @@ export const useItems = routeLoader$(async () => {
   const item_data = await res.json();
   const item_map = item_data.reduce(
     (
-      acc: { [x: string]: any },
+      acc: Map<string | number, string>,
       item: { id: string | number; iconPath: string }
     ) => {
-      acc[item.id] = item.iconPath
+      const item_path = item.iconPath
         .slice(item.iconPath.indexOf("Icons2D") + 8)
         .toLowerCase();
+      acc.set(item.id, item_path);
       return acc;
     },
-    {}
+    new Map()
   );
   return item_map;
 });
@@ -70,7 +71,7 @@ export default component$(() => {
     const items = [];
     for (let i = 0; i < 7; i++) {
       const item = game[`item_${i}` as keyof Game];
-      items.push(get_items.value[item as string]);
+      items.push(get_items.value.get(item as string | number));
     }
     return items;
   };
@@ -87,7 +88,7 @@ export default component$(() => {
             <div key={game.id}>
               <MatchCard
                 game={game}
-                primary_rune={primary_runes.value[game.primary_rune]}
+                primary_rune={primary_runes.value.get(game.primary_rune)}
                 items={vecItems(game)}
               />
             </div>
