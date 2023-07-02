@@ -52,34 +52,34 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
 
     load_players(&accounts.clone(), &riot_api.clone()).await;
 
-    let file_accounts = accounts.clone();
-    let riot_api_file = riot_api.clone();
+    //let file_accounts = accounts.clone();
+    //let riot_api_file = riot_api.clone();
 
-    let (tx, mut rx) = mpsc::unbounded_channel();
-    let mut watcher = RecommendedWatcher::new(
-        move |res| match res {
-            Ok(event) => {
-                tx.send(event).unwrap();
-            }
-            Err(e) => info!("watch error: {:?}", e),
-        },
-        Config::default(),
-    )
-    .unwrap();
+    //let (tx, mut rx) = mpsc::unbounded_channel();
+    //let mut watcher = RecommendedWatcher::new(
+    //    move |res| match res {
+    //        Ok(event) => {
+    //            tx.send(event).unwrap();
+    //        }
+    //        Err(e) => info!("watch error: {:?}", e),
+    //    },
+    //    Config::default(),
+    //)
+    //.unwrap();
 
-    watcher
-        .watch(Path::new("."), RecursiveMode::Recursive)
-        .unwrap();
+    //watcher
+    //    .watch(Path::new("."), RecursiveMode::Recursive)
+    //    .unwrap();
 
-    tokio::spawn(async move {
-        while let Some(res) = rx.recv().await {
-            let file_name = res.paths[0].to_str().unwrap().split("./").last().unwrap();
-            if file_name != "players" {
-                continue;
-            }
-            load_players(&file_accounts, &riot_api_file).await;
-        }
-    });
+    //tokio::spawn(async move {
+    //    while let Some(res) = rx.recv().await {
+    //        let file_name = res.paths[0].to_str().unwrap().split("./").last().unwrap();
+    //        if file_name != "players" {
+    //            continue;
+    //        }
+    //        load_players(&file_accounts, &riot_api_file).await;
+    //    }
+    //});
 
     let (tx, mut rx) = mpsc::channel(100);
 
