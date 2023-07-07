@@ -9,6 +9,7 @@ interface Games {
 }
 
 export const useGameData = routeLoader$(async (requestEvent) => {
+  const start_time = performance.now();
   const endpoint = requestEvent.env.get("API_SERVER") + "/api/get_games";
   const res = await fetch(endpoint);
   const data = (await res.json()) as Games;
@@ -18,6 +19,8 @@ export const useGameData = routeLoader$(async (requestEvent) => {
     }
     return a.id < b.id ? 1 : -1;
   });
+  const end_time = performance.now();
+  console.log(`Request took ${end_time - start_time}ms`);
   return games;
 });
 
@@ -26,7 +29,7 @@ export const usePrimaryRunes = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json"
   );
   const rune_data = await res.json();
-  const rune_map = rune_data.reduce(
+  return rune_data.reduce(
     (
       acc: Map<string | number, string>,
       rune: { iconPath: string; id: string | number }
@@ -39,7 +42,6 @@ export const usePrimaryRunes = routeLoader$(async () => {
     },
     new Map()
   );
-  return rune_map;
 });
 
 export const useItems = routeLoader$(async () => {
@@ -47,7 +49,7 @@ export const useItems = routeLoader$(async () => {
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json"
   );
   const item_data = await res.json();
-  const item_map = item_data.reduce(
+  return item_data.reduce(
     (
       acc: Map<string | number, string>,
       item: { id: string | number; iconPath: string }
@@ -60,7 +62,6 @@ export const useItems = routeLoader$(async () => {
     },
     new Map()
   );
-  return item_map;
 });
 
 export default component$(() => {
