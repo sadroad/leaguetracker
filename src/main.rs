@@ -8,13 +8,13 @@ use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::{
     env,
-    net::SocketAddr,
+    net::{IpAddr, Ipv6Addr, SocketAddr},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
 };
-use tower_http::{trace::TraceLayer};
+use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use ts_rs::TS;
 
@@ -69,9 +69,9 @@ async fn main() -> anyhow::Result<()> {
 
     let port = env::var("PORT").expect("Missing Port Number");
     let port = port.parse::<u16>().expect("Invalid Port Number");
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    let addr = &SocketAddr::new(IpAddr::from(Ipv6Addr::UNSPECIFIED), port);
     tracing::debug!("Listening on {}", addr);
-    axum::Server::bind(&addr)
+    axum::Server::bind(addr)
         .serve(app.into_make_service())
         .await?;
 

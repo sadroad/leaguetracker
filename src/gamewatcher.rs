@@ -1,3 +1,4 @@
+use md5::{Digest, Md5};
 use riven::{
     consts::{Champion, PlatformRoute, Queue, RegionalRoute},
     models::summoner_v4::Summoner,
@@ -15,9 +16,8 @@ use tokio::{
     sync::{mpsc, Mutex},
     time::sleep,
 };
-use md5::{Digest, Md5};
-use uuid::Builder;
 use tracing::info;
+use uuid::Builder;
 
 use crate::AppState;
 
@@ -162,7 +162,9 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                     };
 
                     let mut hasher = Md5::new();
-                    hasher.update((format!("{}{}",player_stats.match_id,player_stats.name)).as_bytes());
+                    hasher.update(
+                        (format!("{}{}", player_stats.match_id, player_stats.name)).as_bytes(),
+                    );
                     let md5_hash = hasher.finalize();
                     let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
 
