@@ -23,7 +23,4 @@ html {
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-body {
-  padding: 0;
-  line-height: inherit;
-}
+/* * { outline: 1px solid red; } */

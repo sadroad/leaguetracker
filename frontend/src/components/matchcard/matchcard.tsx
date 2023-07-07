@@ -38,7 +38,7 @@ const formattedDifferenceDate = (date_milli: any) => {
 };
 
 export const MatchCard = component$<MatchCardProps>((props) => {
-  const game = props.game;
+  const { game } = props;
   const champ_name = game.champion_name.toLowerCase();
   const items = props.items.slice(0, 6);
   const ward = props.items[6];
@@ -56,10 +56,11 @@ export const MatchCard = component$<MatchCardProps>((props) => {
       id="flex-wrapper"
       class={`flex ${
         game.win ? "bg-[#85D7FF]" : "bg-[#FF8585]"
-      } gap-x-5 rounded-3xl mx-72 flex-nowrap`}
+      } gap-x-2 rounded-3xl flex-nowrap`}
     >
-      <div id="gameinfo" class="ml-5">
+      <div id="gameinfo" class="ml-2">
         <img
+          class="w-16"
           width="120"
           height="120"
           loading="lazy"
@@ -69,61 +70,60 @@ export const MatchCard = component$<MatchCardProps>((props) => {
         <div id="gameduration" class="text-center text-2xl font-semibold">
           {secondsToMinutesAndSeconds.value}
         </div>
-        <div id="timecompleted" class="text-center">
+        <div id="timecompleted" class="text-center text-lg">
           {formattedDifferenceDate(game.game_completion_time)}
         </div>
       </div>
-      <div
-        id="playerscore"
-        class="flex flex-grow flex-col gap-y-4 justify-center"
-      >
-        <div id="playername" class="text-center text-5xl font-semibold">
-          {game.name}
+      <div class="flex flex-col md:flex-row min-w-[30vw]">
+        <div id="playerscore" class="flex flex-col justify-center pb-5">
+          <div id="playername" class="text-center text-xl font-bold">
+            {game.name}
+          </div>
+          <div id="scoreline" class="text-center text-xl pt-2">
+            {game.kills}/{game.deaths}/{game.assists}
+          </div>
         </div>
-        <div id="scoreline" class="text-center text-[2rem] pb-6">
-          {game.kills}/{game.deaths}/{game.assists}
-        </div>
-      </div>
-      <div id="runesAndSums" class="flex flex-col justify-center gap-y-3">
-        <div id="runes" class="flex items-center gap-x-3 justify-center">
-          <img
-            class="w-16 h-16 rounded-full bg-black shrink-0"
-            src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/styles/${props.primary_rune}`}
-            loading="lazy"
-            decoding="async"
-            width="32"
-            height="32"
-          />
-          <img
-            class="w-7 h-7 rounded-full bg-black shrink-0"
-            src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/styles/${
-              SECONDARY_RUNES[game.secondary_rune]
-            }`}
-            loading="lazy"
-            decoding="async"
-            width="16"
-            height="16"
-          />
-        </div>
-        <div id="sums" class="flex">
-          <img
-            src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/${
-              SPELLS[game.summoner_spell_1]
-            }`}
-            loading="lazy"
-            decoding="async"
-            height="48"
-            width="48"
-          />
-          <img
-            src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/${
-              SPELLS[game.summoner_spell_2]
-            }`}
-            loading="lazy"
-            decoding="async"
-            height="48"
-            width="48"
-          />
+        <div id="runesAndSums" class="flex flex-col justify-center gap-y-3">
+          <div id="runes" class="flex items-center gap-x-3 justify-center">
+            <img
+              class="w-8 h-8 rounded-full bg-black"
+              src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/styles/${props.primary_rune}`}
+              loading="lazy"
+              decoding="async"
+              width="32"
+              height="32"
+            />
+            <img
+              class="w-7 h-7 rounded-full bg-black shrink-0"
+              src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perk-images/styles/${
+                SECONDARY_RUNES[game.secondary_rune]
+              }`}
+              loading="lazy"
+              decoding="async"
+              width="16"
+              height="16"
+            />
+          </div>
+          <div id="sums" class="flex justify-center pb-1">
+            <img
+              src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/${
+                SPELLS[game.summoner_spell_1]
+              }`}
+              loading="lazy"
+              decoding="async"
+              height="24"
+              width="24"
+            />
+            <img
+              src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/${
+                SPELLS[game.summoner_spell_2]
+              }`}
+              loading="lazy"
+              decoding="async"
+              height="24"
+              width="24"
+            />
+          </div>
         </div>
       </div>
       <div id="items" class="grid grid-cols-3 grid-rows-2 pt-4">
@@ -144,7 +144,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
           }
         })}
       </div>
-      <div id="ward" class="inline-block pt-[3.6rem] mr-3">
+      <div id="ward" class="inline-block pt-[3.6rem] mr-1">
         <img
           src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/items/icons2d/${ward}`}
           loading="lazy"

@@ -44,7 +44,7 @@ export const usePrimaryRunes = routeLoader$(async () => {
   );
   const end_time = performance.now();
   console.log(`Rune data request took ${end_time - start_time}ms`);
-  return rune_map
+  return rune_map;
 });
 
 export const useItems = routeLoader$(async () => {
@@ -82,7 +82,7 @@ export default component$(() => {
   };
 
   return (
-    <div class="bg-slate-800 h-[100%]">
+    <div class="bg-slate-800 h-auto w-screen absolute">
       <div id="navbar" class="text-5xl font-bold text-orange-200">
         <h1>League Tracker</h1>
         {/* <span>Leaderboard</span> */}
