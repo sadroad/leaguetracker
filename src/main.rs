@@ -66,7 +66,9 @@ async fn main() -> anyhow::Result<()> {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let port = env::var("PORT").expect("Missing Port Number");
+    let port = port.parse::<u16>().expect("Invalid Port Number");
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::debug!("Listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
