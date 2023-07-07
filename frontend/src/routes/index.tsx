@@ -77,7 +77,7 @@ export default component$(() => {
   };
 
   return (
-    <div class="bg-slate-800">
+    <div class="bg-slate-800 h-screen">
       <div id="navbar" class="text-5xl font-bold text-orange-200">
         <h1>League Tracker</h1>
         {/* <span>Leaderboard</span> */}
