@@ -91,7 +91,6 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                 .duration_since(time::SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            tracing::info!("Epoch time: {}", epoch_time);
             tx.send(epoch_time).await.unwrap();
             sleep(Duration::from_secs(60)).await;
         }
