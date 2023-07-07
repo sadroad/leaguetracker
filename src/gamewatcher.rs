@@ -1,4 +1,3 @@
-use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
 use riven::{
     consts::{Champion, PlatformRoute, Queue, RegionalRoute},
     models::summoner_v4::Summoner,
@@ -7,7 +6,6 @@ use riven::{
 use serde::Serialize;
 use std::{
     collections::HashMap,
-    path::Path,
     sync::{atomic::Ordering, Arc},
     time::{self, Duration},
 };
@@ -17,6 +15,8 @@ use tokio::{
     sync::{mpsc, Mutex},
     time::sleep,
 };
+use md5::{Digest, Md5};
+use uuid::Builder;
 use tracing::info;
 
 use crate::AppState;
@@ -84,15 +84,16 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
     let (tx, mut rx) = mpsc::channel(100);
 
     tokio::spawn(async move {
-        let mut current_time = time::SystemTime::now();
         loop {
-            sleep(Duration::from_secs(60)).await;
-            let epoch_time = current_time
+            let current_time = time::SystemTime::now();
+            let past = current_time.checked_sub(Duration::from_secs(60)).unwrap();
+            let epoch_time = past
                 .duration_since(time::SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            current_time = time::SystemTime::now();
+            tracing::info!("Epoch time: {}", epoch_time);
             tx.send(epoch_time).await.unwrap();
+            sleep(Duration::from_secs(60)).await;
         }
     });
 
@@ -161,7 +162,12 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         item_6: player_particpant_data.item6,
                     };
 
-                    sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)")
+                    let mut hasher = Md5::new();
+                    hasher.update((format!("{}{}",player_stats.match_id,player_stats.name)).as_bytes());
+                    let md5_hash = hasher.finalize();
+                    let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
+
+                    _ = sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
                         .bind(&player_stats.name)
                         .bind(player_stats.kills)
                         .bind(player_stats.deaths)
@@ -183,6 +189,7 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         .bind(player_stats.item_4)
                         .bind(player_stats.item_5)
                         .bind(player_stats.item_6)
+                        .bind(uuid)
                         .execute(db_pool.as_ref())
                         .await?;
                     state.new_game.store(true, Ordering::Relaxed);

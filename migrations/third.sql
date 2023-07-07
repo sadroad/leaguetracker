@@ -1,0 +1,2 @@
+ALTER TABLE games
+ADD COLUMN md5sum uuid UNIQUE;

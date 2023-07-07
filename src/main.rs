@@ -2,7 +2,6 @@ use axum::{
     debug_handler, extract::State, http::StatusCode, response::IntoResponse, routing::get, Json,
     Router,
 };
-use dotenvy::dotenv;
 use riven::RiotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -15,7 +14,7 @@ use std::{
         Arc, Mutex,
     },
 };
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use tower_http::{trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use ts_rs::TS;
 
@@ -38,7 +37,9 @@ async fn main() -> anyhow::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-   // dotenv()?;
+    if cfg!(debug_assertions) {
+        dotenvy::dotenv()?;
+    }
     let connection_string = env::var("DATABASE_URL")?;
     let pool = Arc::new(
         PgPoolOptions::new()
