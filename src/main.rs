@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-    dotenv()?;
+   // dotenv()?;
     let connection_string = env::var("DATABASE_URL")?;
     let pool = Arc::new(
         PgPoolOptions::new()
