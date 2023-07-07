@@ -3,6 +3,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { Game } from "../../bindings/Game.ts";
 import { MatchCard } from "../components/matchcard/matchcard";
+import { perksBlob } from "../utilities/perks";
 
 interface Games {
   games: Game[];
@@ -26,10 +27,7 @@ export const useGameData = routeLoader$(async (requestEvent) => {
 
 export const usePrimaryRunes = routeLoader$(async () => {
   const start_time = performance.now();
-  const res = await fetch(
-    "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/perks.json"
-  );
-  const rune_data = await res.json();
+  const rune_data = perksBlob;
   const rune_map = rune_data.reduce(
     (
       acc: Map<string | number, string>,
@@ -97,7 +95,7 @@ export default component$(() => {
             <div key={game.id}>
               <MatchCard
                 game={game}
-                primary_rune={primary_runes.value.get(game.primary_rune)}
+                primary_rune={primary_runes.value.get(game.primary_rune) ?? ''}
                 items={vecItems(game)}
               />
             </div>
