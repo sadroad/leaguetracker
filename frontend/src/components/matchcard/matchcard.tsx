@@ -51,6 +51,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
     }
     return `${minutes}:${remainingSeconds}`;
   });
+
   return (
     <div
       id="flex-wrapper"

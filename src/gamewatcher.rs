@@ -96,79 +96,80 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
         }
     });
 
-    while let Some(epoch_time) = rx.recv().await {
-        for summoner in accounts.lock().await.values() {
-            if let Ok(match_list) = riot_api
-                .match_v5()
-                .get_match_ids_by_puuid(
-                    RegionalRoute::AMERICAS,
-                    &summoner.puuid,
-                    Some(20),
-                    None,
-                    Some(Queue::SUMMONERS_RIFT_5V5_RANKED_SOLO),
-                    Some(epoch_time.try_into().unwrap()),
-                    None,
-                    None,
-                )
-                .await
-            {
-                if match_list.is_empty() {
-                    continue;
-                }
-                info!("{} played a match in the last minute", summoner.name);
-                for match_id in match_list.iter() {
-                    let game = match riot_api
-                        .match_v5()
-                        .get_match(RegionalRoute::AMERICAS, match_id)
-                        .await?
-                    {
-                        Some(game) => game,
-                        None => {
-                            info!("Unable to find match_id: {}", match_id);
-                            continue;
-                        }
-                    };
-                    let player_particpant_data = game
-                        .info
-                        .participants
-                        .iter()
-                        .find(|x| x.puuid == summoner.puuid)
-                        .unwrap();
-                    let player_stats = PlayerStats {
-                        name: player_particpant_data.summoner_name.clone(),
-                        kills: player_particpant_data.kills,
-                        deaths: player_particpant_data.deaths,
-                        assists: player_particpant_data.assists,
-                        primary_rune: player_particpant_data.perks.styles[0].selections[0].perk,
-                        secondary_rune: player_particpant_data.perks.styles[1].style,
-                        summoner_spell_1: player_particpant_data.summoner1_id,
-                        summoner_spell_2: player_particpant_data.summoner2_id,
-                        champion_id: player_particpant_data.champion().unwrap().0 as i32,
-                        champion_name: Champion(player_particpant_data.champion().unwrap().0)
-                            .identifier()
-                            .unwrap()
-                            .to_string(),
-                        game_duration: game.info.game_duration,
-                        game_completion: game.info.game_end_timestamp.unwrap(),
-                        win: player_particpant_data.win,
-                        match_id: match_id.to_string(),
-                        item_0: player_particpant_data.item0,
-                        item_1: player_particpant_data.item1,
-                        item_2: player_particpant_data.item2,
-                        item_3: player_particpant_data.item3,
-                        item_4: player_particpant_data.item4,
-                        item_5: player_particpant_data.item5,
-                        item_6: player_particpant_data.item6,
-                    };
+    loop {
+        while let Some(epoch_time) = rx.recv().await {
+            for summoner in accounts.lock().await.values() {
+                if let Ok(match_list) = riot_api
+                    .match_v5()
+                    .get_match_ids_by_puuid(
+                        RegionalRoute::AMERICAS,
+                        &summoner.puuid,
+                        Some(20),
+                        None,
+                        Some(Queue::SUMMONERS_RIFT_5V5_RANKED_SOLO),
+                        Some(epoch_time.try_into().unwrap()),
+                        None,
+                        None,
+                    )
+                    .await
+                {
+                    if match_list.is_empty() {
+                        continue;
+                    }
+                    info!("{} played a match in the last minute", summoner.name);
+                    for match_id in match_list.iter() {
+                        let game = match riot_api
+                            .match_v5()
+                            .get_match(RegionalRoute::AMERICAS, match_id)
+                            .await?
+                        {
+                            Some(game) => game,
+                            None => {
+                                info!("Unable to find match_id: {}", match_id);
+                                continue;
+                            }
+                        };
+                        let player_particpant_data = game
+                            .info
+                            .participants
+                            .iter()
+                            .find(|x| x.puuid == summoner.puuid)
+                            .unwrap();
+                        let player_stats = PlayerStats {
+                            name: player_particpant_data.summoner_name.clone(),
+                            kills: player_particpant_data.kills,
+                            deaths: player_particpant_data.deaths,
+                            assists: player_particpant_data.assists,
+                            primary_rune: player_particpant_data.perks.styles[0].selections[0].perk,
+                            secondary_rune: player_particpant_data.perks.styles[1].style,
+                            summoner_spell_1: player_particpant_data.summoner1_id,
+                            summoner_spell_2: player_particpant_data.summoner2_id,
+                            champion_id: player_particpant_data.champion().unwrap().0 as i32,
+                            champion_name: Champion(player_particpant_data.champion().unwrap().0)
+                                .identifier()
+                                .unwrap()
+                                .to_string(),
+                            game_duration: game.info.game_duration,
+                            game_completion: game.info.game_end_timestamp.unwrap(),
+                            win: player_particpant_data.win,
+                            match_id: match_id.to_string(),
+                            item_0: player_particpant_data.item0,
+                            item_1: player_particpant_data.item1,
+                            item_2: player_particpant_data.item2,
+                            item_3: player_particpant_data.item3,
+                            item_4: player_particpant_data.item4,
+                            item_5: player_particpant_data.item5,
+                            item_6: player_particpant_data.item6,
+                        };
 
-                    let mut hasher = Md5::new();
-                    hasher.update(
-                        (format!("{}{}", player_stats.match_id, player_stats.name)).as_bytes(),
-                    );
-                    let md5_hash = hasher.finalize();
-                    let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
+                        let mut hasher = Md5::new();
+                        hasher.update(
+                            (format!("{}{}", player_stats.match_id, player_stats.name)).as_bytes(),
+                        );
+                        let md5_hash = hasher.finalize();
+                        let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
 
-                    _ = sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
+                        _ = sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
                         .bind(&player_stats.name)
                         .bind(player_stats.kills)
                         .bind(player_stats.deaths)
@@ -193,13 +194,13 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         .bind(uuid)
                         .execute(db_pool.as_ref())
                         .await?;
-                    state.new_game.store(true, Ordering::Relaxed);
-                    info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
-                }
-            };
+                        state.new_game.store(true, Ordering::Relaxed);
+                        info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
+                    }
+                };
+            }
         }
     }
-    Ok(())
 }
 
 async fn load_players(
