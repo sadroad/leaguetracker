@@ -7,8 +7,7 @@ use riven::{
 use serde::Serialize;
 use std::{
     collections::HashMap,
-    dbg,
-    sync::{atomic::Ordering, mpsc::TrySendError, Arc},
+    sync::{atomic::Ordering, Arc},
     time::{self, Duration},
 };
 use tokio::{
@@ -177,7 +176,7 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
 
                         println!("Inserting into the DB");
-                        _ = sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
+                        if sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
                         .bind(&player_stats.name)
                         .bind(player_stats.kills)
                         .bind(player_stats.deaths)
@@ -201,7 +200,10 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         .bind(player_stats.item_6)
                         .bind(uuid)
                         .execute(db_pool.as_ref())
-                        .await?;
+                        .await.is_err() {
+                            info!("Game already stored, skipping");
+                            continue;
+                        };
                         state.new_game.store(true, Ordering::Relaxed);
                         info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
                     }
