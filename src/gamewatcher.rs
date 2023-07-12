@@ -104,7 +104,7 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
         while let Some(epoch_time) = rx.recv().await {
             println!("Got a time");
             for summoner in accounts.lock().await.values() {
-                println!("Trying {}", summoner);
+                println!("Trying {}", summoner.name);
                 if let Ok(match_list) = riot_api
                     .match_v5()
                     .get_match_ids_by_puuid(
