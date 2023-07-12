@@ -7,7 +7,8 @@ use riven::{
 use serde::Serialize;
 use std::{
     collections::HashMap,
-    sync::{atomic::Ordering, Arc},
+    dbg,
+    sync::{atomic::Ordering, mpsc::TrySendError, Arc},
     time::{self, Duration},
 };
 use tokio::{
@@ -81,7 +82,7 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
     //    }
     //});
 
-    let (tx, mut rx) = mpsc::channel(100);
+    let (tx, mut rx) = mpsc::unbounded_channel();
 
     tokio::spawn(async move {
         loop {
@@ -91,7 +92,10 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                 .duration_since(time::SystemTime::UNIX_EPOCH)
                 .unwrap()
                 .as_secs();
-            tx.send(epoch_time).await.unwrap();
+            tx.send(epoch_time).unwrap();
+            //if let Err(TrySendError(e)) = tx.try_send(epoch_time).await {
+            //    dbg!(e);
+            //}
             sleep(Duration::from_secs(60)).await;
         }
     });

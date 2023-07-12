@@ -1,32 +1,69 @@
 [package]
 name = "streaktracker"
-version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "server"
-path = "src/main.rs"
-
-[profile.release]
-strip = true
-lto = true
+version = "0.1.0"
 
 [dependencies]
 anyhow = "1"
-axum = { version = "0.6", features = ["macros"] }
 chrono = "0.4"
 crc32fast = "1.3"
 dotenvy = "0.15"
-riven = {version = "2.18", default-features= false, features = ["rustls-tls"]}
-serde = { version = "1", features = ["derive"] }
+md-5 = "0.10.5"
 serde_json = "1"
-sqlx = { version = "0.7.0-alpha.3", features = [ "runtime-tokio", "tls-rustls", "postgres", "macros", "uuid", "chrono"] }
-tokio = { version = "1.28", features = ["full"] }
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tower-http = {version = "0.4", features = ["trace", "fs"]}
 tracing = "0.1"
 ts-rs = "6.2"
-uuid = { version = "1.4.0", features = ["v3"] }
-md-5 = "0.10.5"
+
+[dependencies.axum]
+version = "0.6"
+features = ["macros"]
+optional = false
+
+[dependencies.riven]
+version = "2.18"
+features = ["rustls-tls"]
+optional = false
+default-features = false
+
+[dependencies.serde]
+version = "1"
+features = ["std", "serde_derive"]
+optional = false
+default-features = false
+
+[dependencies.sqlx]
+version = "0.7.0-alpha.3"
+features = ["runtime-tokio", "tls-rustls", "postgres", "macros", "uuid", "chrono"]
+optional = false
+
+[dependencies.tokio]
+version = "1.28"
+features = ["full"]
+optional = false
+
+[dependencies.tower-http]
+version = "0.4"
+features = ["percent-encoding", "fs", "httpdate", "tracing", "set-status", "mime_guess", "trace"]
+optional = false
+default-features = false
+
+[dependencies.tracing-subscriber]
+version = "0.3"
+features = ["env-filter"]
+optional = false
+
+[dependencies.uuid]
+version = "1.4.0"
+features = ["v3"]
+optional = false
+[profile.release]
+lto = true
+strip = true
+
+[profile.release.package]
+
+[[bin]]
+path = "src/main.rs"
+name = "server"
+plugin = false
+proc-macro = false
+required-features = []
