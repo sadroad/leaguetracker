@@ -1,5 +1,13 @@
 lockfileVersion: '6.0'
 
+dependencies:
+  '@hono/node-server':
+    specifier: ^1.0.2
+    version: 1.0.2
+  hono:
+    specifier: ^3.3.0
+    version: 3.3.0
+
 devDependencies:
   '@builder.io/qwik':
     specifier: ^1.2.2
@@ -604,6 +612,11 @@ packages:
     resolution: {integrity: sha512-LxcyMGxwmTh2lY9FwHPGWOHmYFCZvbrFCBZL4FzSSsxsRPuhrYUg/49/0KDfW8tnIEaEHtfmn6+NPN+1DqaNmA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
+
+  /@hono/node-server@1.0.2:
+    resolution: {integrity: sha512-j8oduBujeGN2+Zx8G1dp3yhiLrqCs/dMJp1wKSlXmMeAxpjVgUtYLaUjhY69lPVDyTjoBb3fmHXCX6e2iIgB9A==}
+    engines: {node: '>=18.0.0'}
+    dev: false
 
   /@humanwhocodes/config-array@0.11.10:
     resolution: {integrity: sha512-KVVjQmNUepDVGXNuoRRdmmEjruj0KfiGSbS8LVc12LMsWDQzRXJ0qdhN8L8uUigKpfEHRhlaQFY0ib1tnUbNeQ==}
@@ -2291,6 +2304,11 @@ packages:
   /hast-util-whitespace@2.0.1:
     resolution: {integrity: sha512-nAxA0v8+vXSBDt3AnRUNjyRIQ0rD+ntpbAp4LnPkumc5M9yUbSMa4XDU9Q6etY4f1Wp4bNgvc1yjiZtsTTrSng==}
     dev: true
+
+  /hono@3.3.0:
+    resolution: {integrity: sha512-H15s0aRWebhry9d1yevYO2LqBbrJZTPZwui9S39mv6rZE9LdJWoYn2tWCa6etL3mlu5JHm0e3xVMcQiu2TfjJg==}
+    engines: {node: '>=16.0.0'}
+    dev: false
 
   /http-cache-semantics@4.1.1:
     resolution: {integrity: sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ==}

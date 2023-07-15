@@ -10,6 +10,7 @@
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
     "build.server": "vite build -c adapters/express/vite.config.ts",
+    "build.hono": "vite build -c adapters/hono/vite.config.ts",
     "build.types": "tsc --incremental --noEmit",
     "deploy": "wrangler pages deploy ./dist",
     "dev": "vite --mode ssr",
@@ -19,6 +20,7 @@
     "lint": "eslint \"src/**/*.ts*\"",
     "preview": "qwik build preview && vite preview --open",
     "serve": "node server/entry.express",
+    "hono": "node server/entry.hono",
     "start": "vite --open --mode ssr",
     "qwik": "qwik"
   },
@@ -44,5 +46,9 @@
     "vite": "4.3.9",
     "vite-tsconfig-paths": "4.2.0",
     "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.0.2",
+    "hono": "^3.3.0"
   }
 }
