@@ -2,6 +2,7 @@
  * Tailwind CSS imports
  * View the full documentation at https://tailwindcss.com
  */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,4 +24,9 @@ html {
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
+article > pre > code {
+  display: grid;
+}
+
+/* To see the size of elements */
 /* * { outline: 1px solid red; } */

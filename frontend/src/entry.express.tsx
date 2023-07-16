@@ -38,7 +38,7 @@ const { router, notFound } = createQwikCity({ render, qwikCityPlan, manifest });
 // https://expressjs.com/
 const app = express();
 
-app.disable('x-powered-by');
+app.disable("x-powered-by");
 
 // Enable gzip compression
 // app.use(compression());
