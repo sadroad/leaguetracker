@@ -45,7 +45,6 @@
     "undici": "5.22.1",
     "vite": "4.3.9",
     "vite-tsconfig-paths": "4.2.0",
-    "wrangler": "^3.0.0",
     "@hono/node-server": "^1.0.2",
     "@tailwindcss/typography": "^0.5.9",
     "hono": "^3.3.0",
