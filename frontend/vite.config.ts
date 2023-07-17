@@ -25,6 +25,7 @@ export default defineConfig(async () => {
           ],
         ],
       },
+      trailingSlash: false,
     }), qwikVite(), tsconfigPaths()],
     preview: {
       headers: {
