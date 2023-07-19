@@ -1,4 +1,4 @@
-import { component$, useComputed$ } from "@builder.io/qwik";
+import { $, component$, useComputed$ } from "@builder.io/qwik";
 import type { Game } from "../../../bindings/Game";
 import { NORMALIZATION_MAP } from "../../utilities/normalization";
 import { SPELLS } from "../../utilities/spells";
@@ -10,7 +10,7 @@ interface MatchCardProps {
   items: string[];
 }
 
-const formattedDifferenceDate = (date_milli: any) => {
+const formattedDifferenceDate = $((date_milli: any) => {
   const date = date_milli;
   const now = Date.now();
   const diff = now - date;
@@ -35,7 +35,7 @@ const formattedDifferenceDate = (date_milli: any) => {
   } else {
     return `just now`;
   }
-};
+});
 
 export const MatchCard = component$<MatchCardProps>((props) => {
   const { game } = props;
@@ -67,6 +67,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
           loading="lazy"
           decoding="async"
           src={`https://raw.communitydragon.org/latest/game/assets/characters/${champ_name}/hud/${NORMALIZATION_MAP[champ_name]}`}
+          alt={`Portrait of ${champ_name}`}
         />
         <div id="gameduration" class="text-center text-2xl font-semibold">
           {secondsToMinutesAndSeconds.value}
@@ -93,6 +94,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
               decoding="async"
               width="32"
               height="32"
+              alt={`Image of ${props.primary_rune}`}
             />
             <img
               class="w-7 h-7 rounded-full bg-black shrink-0"
@@ -103,6 +105,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
               decoding="async"
               width="16"
               height="16"
+              alt={`Image of ${game.secondary_rune}`}
             />
           </div>
           <div id="sums" class="flex justify-center pb-1">
@@ -114,6 +117,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
               decoding="async"
               height="24"
               width="24"
+              alt={`Image of ${game.summoner_spell_1}`}
             />
             <img
               src={`https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/data/spells/icons2d/${
@@ -123,6 +127,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
               decoding="async"
               height="24"
               width="24"
+              alt={`Image of ${game.summoner_spell_2}`}
             />
           </div>
         </div>
@@ -140,6 +145,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
                 decoding="async"
                 width="64"
                 height="64"
+                alt={`Image of ${item}`}
               />
             );
           }
@@ -152,6 +158,7 @@ export const MatchCard = component$<MatchCardProps>((props) => {
           decoding="async"
           height="64"
           width="64"
+          alt={`Image of ${ward}`}
         />
       </div>
     </div>
