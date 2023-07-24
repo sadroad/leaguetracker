@@ -84,6 +84,7 @@ export const NORMALIZATION_MAP: NormalizationMap = {
   missfortune: "missfortune_circle_0.png",
   mordekaiser: "mordekaiser_circle_0.png",
   morgana: "morgana_circle_0.png",
+  naafiri: "naafiri_circle.naafiri.png",
   nami: "nami_circle.png",
   nasus: "nasus_circle.png",
   nautilus: "nautilus_circle_0.png",
