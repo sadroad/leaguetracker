@@ -21,6 +21,7 @@ export default component$(() => {
       <head>
         <meta charSet="utf-8" />
         <link rel="manifest" href="/manifest.json" />
+        <script defer data-domain="tracker.reng.ar" src="https://lawful-sleep-production.up.railway.app/js/script.js"></script>
         <RouterHead />
       </head>
       <body lang="en">
