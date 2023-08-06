@@ -32,14 +32,14 @@ struct Entry {
 async fn main() -> anyhow::Result<()> {
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgresql://postgres:EVbmTUkm7L7ZSsuWBQTU@containers-us-west-65.railway.app:7498/railway")
+        .connect("")
         .await?;
     let entries = sqlx::query_as::<_, Entry>("SELECT * FROM games")
         .fetch_all(&pool)
         .await?;
     let config = Config {
         url: "libsql://league-tracker-sadroad.turso.io".try_into()?,
-        auth_token: Some(String::from("eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTEyODA0NDAsImlkIjoiZTJjNGZiYTQtMzNkZC0xMWVlLWI3OGUtMzY5OGMyNDkwNzZjIn0.nRgwwr9NvtmJnSqf-MZzRDmLVLjCIfnDJsS-rDeTx3i0C7aPcL9or5Nl9Ohb_7SoEOhl10Xfstwqn_YnBbiVCQ"))
+        auth_token: Some(String::from(""))
     };
     let client = Client::from_config(config).await?;
     for entry in entries {
