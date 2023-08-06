@@ -1,4 +1,4 @@
-use libsql_client::{Statement, args};
+use libsql_client::{args, Statement};
 use md5::{Digest, Md5};
 use riven::{
     consts::{Champion, PlatformRoute, Queue, RegionalRoute},
@@ -178,7 +178,13 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
 
                         info!("Inserting into the DB");
                         let transaction = client.transaction().await.unwrap();
-                        let rs = transaction.execute(Statement::with_args("SELECT md5sum FROM games WHERE md5sum = ?", args!(uuid.to_string()))).await.unwrap();
+                        let rs = transaction
+                            .execute(Statement::with_args(
+                                "SELECT md5sum FROM games WHERE md5sum = ?",
+                                args!(uuid.to_string()),
+                            ))
+                            .await
+                            .unwrap();
                         if !rs.rows.is_empty() {
                             info!("Game already stored, skipping");
                             transaction.rollback().await.unwrap();

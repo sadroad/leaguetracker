@@ -2,12 +2,10 @@ use axum::{
     debug_handler, extract::State, http::StatusCode, response::IntoResponse, routing::get, Json,
     Router,
 };
-use libsql_client::Statement;
-use libsql_client::Value;
+use libsql_client::{client::Client, Statement, Value};
 use riven::RiotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use libsql_client::client::Client;
 use std::{
     env,
     net::{IpAddr, Ipv6Addr, SocketAddr},
@@ -104,7 +102,7 @@ struct Game {
 async fn get_games_handler(state: State<AppState>) -> impl IntoResponse {
     let games = if state.new_game.load(Ordering::Relaxed) {
         let client = state.client.clone();
-        let mut games: Vec<Game> = client.execute(Statement::new("select (id, name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, item_0, item_1, item_2, item_3, item_4, item_5, item_6) from games")).await.unwrap().rows.iter().map(|row| {
+        let mut games: Vec<Game> = client.execute(Statement::new("select id, name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, item_0, item_1, item_2, item_3, item_4, item_5, item_6 from games")).await.unwrap().rows.iter().map(|row| {
             let name = row.try_get::<&str>(1).unwrap().to_string();
             let champion_name = row.try_get::<&str>(10).unwrap().to_string();
             let win = match *row.values.get(13).unwrap() {
