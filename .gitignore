@@ -6,3 +6,4 @@ removeoldprimary/target
 scripts/iconfinder/target
 node_modules
 server/target
+server/scripts/postgres_sqlite/target

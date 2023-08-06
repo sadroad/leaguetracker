@@ -24,7 +24,6 @@ export default component$(() => {
         <RouterHead />
       </head>
       <body lang="en">
-        <script defer data-domain="tracker.reng.ar" src="https://lawful-sleep-production.up.railway.app/js/script.js"></script>
         <RouterOutlet />
         <ServiceWorkerRegister />
       </body>

@@ -1,3 +1,4 @@
+use libsql_client::{Statement, args};
 use md5::{Digest, Md5};
 use riven::{
     consts::{Champion, PlatformRoute, Queue, RegionalRoute},
@@ -47,7 +48,7 @@ struct PlayerStats {
 }
 
 pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyhow::Result<()> {
-    let db_pool = state.conn.clone();
+    let client = state.client.clone();
     let accounts = Arc::new(Mutex::new(HashMap::new()));
 
     load_players(&accounts.clone(), &riot_api.clone()).await;
@@ -175,35 +176,39 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                         let md5_hash = hasher.finalize();
                         let uuid = Builder::from_md5_bytes(md5_hash.into()).into_uuid();
 
-                        println!("Inserting into the DB");
-                        if sqlx::query("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)")
-                        .bind(&player_stats.name)
-                        .bind(player_stats.kills)
-                        .bind(player_stats.deaths)
-                        .bind(player_stats.assists)
-                        .bind(player_stats.primary_rune)
-                        .bind(player_stats.secondary_rune)
-                        .bind(player_stats.summoner_spell_1)
-                        .bind(player_stats.summoner_spell_2)
-                        .bind(player_stats.champion_id)
-                        .bind(&player_stats.champion_name)
-                        .bind(player_stats.game_duration)
-                        .bind(player_stats.game_completion)
-                        .bind(player_stats.win)
-                        .bind(&player_stats.match_id)
-                        .bind(player_stats.item_0)
-                        .bind(player_stats.item_1)
-                        .bind(player_stats.item_2)
-                        .bind(player_stats.item_3)
-                        .bind(player_stats.item_4)
-                        .bind(player_stats.item_5)
-                        .bind(player_stats.item_6)
-                        .bind(uuid)
-                        .execute(db_pool.as_ref())
-                        .await.is_err() {
+                        info!("Inserting into the DB");
+                        let transaction = client.transaction().await.unwrap();
+                        let rs = transaction.execute(Statement::with_args("SELECT md5sum FROM games WHERE md5sum = ?", args!(uuid.to_string()))).await.unwrap();
+                        if !rs.rows.is_empty() {
                             info!("Game already stored, skipping");
+                            transaction.rollback().await.unwrap();
                             continue;
-                        };
+                        }
+                        let _ = transaction.execute(Statement::with_args("INSERT INTO games (name, kills, deaths, assists, primary_rune, secondary_rune, summoner_spell_1, summoner_spell_2, champion_id, champion_name, game_duration, game_completion_time, win, match_id, item_0, item_1, item_2, item_3, item_4, item_5, item_6, md5sum) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        args!(
+                            player_stats.name.clone(),
+                            player_stats.kills,
+                            player_stats.deaths,
+                            player_stats.assists,
+                            player_stats.primary_rune,
+                            player_stats.secondary_rune,
+                            player_stats.summoner_spell_1,
+                            player_stats.summoner_spell_2,
+                            player_stats.champion_id,
+                            player_stats.champion_name.clone(),
+                            player_stats.game_duration,
+                            player_stats.game_completion,
+                            i32::from(player_stats.win),
+                            player_stats.match_id.clone(),
+                            player_stats.item_0,
+                            player_stats.item_1,
+                            player_stats.item_2,
+                            player_stats.item_3,
+                            player_stats.item_4,
+                            player_stats.item_5,
+                            player_stats.item_6,
+                            uuid.to_string(),
+                        ))).await.unwrap();
                         state.new_game.store(true, Ordering::Relaxed);
                         info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
                     }
