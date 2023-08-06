@@ -215,6 +215,7 @@ pub async fn start_game_watcher(riot_api: Arc<RiotApi>, state: AppState) -> anyh
                             player_stats.item_6,
                             uuid.to_string(),
                         ))).await.unwrap();
+                        transaction.commit().await.unwrap();
                         state.new_game.store(true, Ordering::Relaxed);
                         info!("{}", serde_json::to_string_pretty(&player_stats).unwrap());
                     }

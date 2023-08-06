@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
         .fetch_all(&pool)
         .await?;
     let config = Config {
-        url: "libsql://league-tracker-sadroad.turso.io".try_into()?,
+        url: "".try_into()?,
         auth_token: Some(String::from(""))
     };
     let client = Client::from_config(config).await?;
