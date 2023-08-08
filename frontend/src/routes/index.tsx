@@ -11,7 +11,6 @@ interface Games {
 }
 
 export const useGameData = routeLoader$(async (requestEvent) => {
-  const start_time = performance.now();
   const endpoint = requestEvent.env.get("API_SERVER") + "/api/get_games";
   const res = await fetch(endpoint);
   const data = (await res.json()) as Games;
@@ -21,13 +20,10 @@ export const useGameData = routeLoader$(async (requestEvent) => {
     }
     return a.id < b.id ? 1 : -1;
   });
-  const end_time = performance.now();
-  console.log(`Game data request took ${end_time - start_time}ms`);
   return games;
 });
 
 export const usePrimaryRunes = routeLoader$(async () => {
-  const start_time = performance.now();
   const rune_data = perksBlob;
   const rune_map = rune_data.reduce(
     (
@@ -42,13 +38,10 @@ export const usePrimaryRunes = routeLoader$(async () => {
     },
     new Map()
   );
-  const end_time = performance.now();
-  console.log(`Rune data request took ${end_time - start_time}ms`);
   return rune_map;
 });
 
 export const useItems = routeLoader$(async () => {
-  const start_time = performance.now();
   const item_data = itemsBlob;
   const item_map = item_data.reduce(
     (
@@ -63,8 +56,6 @@ export const useItems = routeLoader$(async () => {
     },
     new Map()
   );
-  const end_time = performance.now();
-  console.log(`Item data request took ${end_time - start_time}ms`);
   return item_map;
 });
 
