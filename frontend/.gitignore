@@ -40,3 +40,6 @@ lerna-debug.log*
 
 # Cloudflare
 functions/**/*.js
+
+# Sentry Auth Token
+.env.sentry-build-plugin
