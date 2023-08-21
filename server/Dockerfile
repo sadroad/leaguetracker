@@ -15,8 +15,8 @@ COPY Cargo.toml Cargo.lock ./
 COPY ./src ./src
 RUN cargo build --release
 
-FROM debian:bullseye-slim AS runtime
-RUN apt-get update && apt-get install -y ca-certificates sqlite3 && rm -rf /var/lib/apt/lists/*
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && apt-get install -y ca-certificates libsqlite3-dev && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/server ./
 COPY players ./
 

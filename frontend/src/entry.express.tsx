@@ -17,6 +17,7 @@ import render from "./entry.ssr";
 import express from "express";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
+import * as Sentry from "@sentry/node";
 
 declare global {
   interface QwikCityPlatform extends PlatformNode {}
@@ -38,7 +39,19 @@ const { router, notFound } = createQwikCity({ render, qwikCityPlan, manifest });
 // https://expressjs.com/
 const app = express();
 
+Sentry.init({
+    dsn: "https://0a9fbe0b254a615a273a1708917dcdc2@debug.villablanca.tech/2",
+    integrations: [
+        new Sentry.Integrations.Http({tracing:true}),
+        new Sentry.Integrations.Express({app}),
+    ],
+    tracesSampleRate: 1.0,
+});
+
 app.disable("x-powered-by");
+
+app.use(Sentry.Handlers.requestHandler({ip: true}));
+app.use(Sentry.Handlers.tracingHandler());
 
 // Enable gzip compression
 // app.use(compression());
@@ -50,6 +63,8 @@ app.use(express.static(distDir, { redirect: false }));
 
 // Use Qwik City's page and endpoint request handler
 app.use(router);
+
+app.use(Sentry.Handlers.errorHandler());
 
 // Use Qwik City's 404 handler
 app.use(notFound);
