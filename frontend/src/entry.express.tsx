@@ -40,7 +40,7 @@ const { router, notFound } = createQwikCity({ render, qwikCityPlan, manifest });
 const app = express();
 
 Sentry.init({
-    dsn: "https://0a9fbe0b254a615a273a1708917dcdc2@debug.villablanca.tech/2",
+    dsn: "https://68e207c76f024ea6fd6a2db5e0101965@debug.villablanca.tech/7",
     integrations: [
         new Sentry.Integrations.Http({tracing:true}),
         new Sentry.Integrations.Express({app}),
