@@ -9,8 +9,6 @@ RUN pnpm fetch
 FROM base as build
 ADD . .
 COPY --from=dependencies /app/node_modules ./node_modules
-ARG SENTRY_AUTH_TOKEN
-ENV SENTRY_AUTH_TOKEN ${SENTRY_AUTH_TOKEN}
 RUN pnpm install -r --offline
 RUN pnpm build
 
