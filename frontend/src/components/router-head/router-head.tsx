@@ -27,6 +27,7 @@ export const RouterHead = component$(() => {
       {head.styles.map((s) => (
         <style key={s.key} {...s.props} dangerouslySetInnerHTML={s.style} />
       ))}
+      <script defer data-domain="tracker.reng.ar" src="https://plausible-analytics-production-f295.up.railway.app/js/script.js"></script>
     </>
   );
 });
