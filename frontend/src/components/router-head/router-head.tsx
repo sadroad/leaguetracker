@@ -27,7 +27,7 @@ export const RouterHead = component$(() => {
       {head.styles.map((s) => (
         <style key={s.key} {...s.props} dangerouslySetInnerHTML={s.style} />
       ))}
-      <script defer data-domain="tracker.reng.ar" data-api="https://api.villablanca.tech/api/event" src="https://api.villablanca.tech/js/script.js"></script>
+      <script defer data-domain="tracker.reng.ar" data-api="https://api.reng.ar/api/event" src="https://api.reng.ar/js/script.js"></script>
     </>
   );
 });
